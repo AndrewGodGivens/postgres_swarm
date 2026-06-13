@@ -24,3 +24,10 @@
     owner: root
     group: root
     mode: "0755"
+
+- name: Ensure docker swarm overlay network exists
+  community.docker.docker_network:
+    name: "{{ postgres_swarm_network_name }}"
+    driver: overlay
+    scope: swarm
+    state: present
