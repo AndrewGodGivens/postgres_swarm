@@ -1,0 +1,6 @@
+---
+- name: Install dependencies
+  include_tasks: install_dependencies.yml
+
+- name: Run postgres in swarm
+  include_tasks: run_stack_postgres.yml

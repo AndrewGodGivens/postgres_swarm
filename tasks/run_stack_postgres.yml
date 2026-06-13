@@ -1,0 +1,65 @@
+---
+- name: Build compose definition
+  ansible.builtin.set_fact:
+    compose_definition:
+      version: '3.8'
+      services:
+        postgres:
+          image: "{{ postgres_swarm_image }}"
+          networks:
+            - "{{ postgres_swarm_network_name }}"
+          volumes:
+            - "{{ postgres_swarm_volume_path }}:{{ postgres_swarm_pgdata }}"
+          shm_size: "{{ postgres_swarm_shm_size }}"
+          command:
+            - postgres
+            - -c
+            - config_file=/etc/postgresql/postgresql.conf
+          environment:
+            POSTGRES_USER: "{{ postgres_swarm_user }}"
+            POSTGRES_PASSWORD: "{{ postgres_swarm_password }}"
+            POSTGRES_DB: "{{ postgres_swarm_db_name }}"
+            PGDATA: "{{ postgres_swarm_pgdata | default('/var/lib/postgresql/data/pgdata') }}"
+            ARCHIVE_MODE: "{{ postgres_swarm_archive_mode }}"
+            ARCHIVE_TIMEOUT: "{{ postgres_swarm_archive_timeout | default('30') }}"
+            AWS_ACCESS_KEY_ID: "{{ postgres_swarm_aws_access_key_id }}"
+            AWS_REGION: "{{ postgres_swarm_aws_region }}"
+            AWS_SECRET_ACCESS_KEY: "{{ postgres_swarm_aws_secret_access_key }}"
+            PGUSER: "{{ postgres_swarm_user }}"
+            PGPASSWORD: "{{ postgres_swarm_password }}"
+            PGHOST: "{{ postgres_swarm_pghost | default('/var/run/postgresql') }}"
+            PGDATABASE: "{{ postgres_swarm_db_name }}"
+            APPRISE_TARGET: "{{ postgres_swarm_apprise_target }}"
+            AWS_ENDPOINT: "{{ postgres_swarm_aws_endpoint }}"
+
+            WALG_COMPRESSION_METHOD: brotli
+            WALG_DELTA_MAX_STEPS: 6
+            WALG_S3_PREFIX: "{{ postgres_swarm_walg_s3_prefix }}"
+
+            RECOVERY_WALG: "{{ postgres_swarm_recovery_walg }}"
+            # RECOVERY_TARGET_TIME: "{{ postgres_swarm_recovery_target_time }}"
+          healthcheck:
+            test: "pg_isready -U {{ postgres_swarm_user }} -d {{ postgres_swarm_db_name }}"
+            interval: 30s
+            retries: 3
+            start_period: 30s
+            timeout: 5s
+          deploy:
+            replicas: 1
+            restart_policy:
+              condition: any
+              delay: 5s
+              max_attempts: 3
+              window: 120s
+            placement:
+              constraints:
+                - "node.hostname == {{ postgres_swarm_target_host }}"
+      networks: "{{ {postgres_swarm_network_name: {'external': true}} }}"
+
+- name: Deploy PostgreSQL stack
+  community.docker.docker_stack:
+    state: present
+    name: "{{ postgres_swarm_stack_name }}"
+    compose:
+      - "{{ compose_definition }}"
+  register: deploy_result

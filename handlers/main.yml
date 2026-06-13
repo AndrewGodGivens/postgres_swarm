@@ -1,0 +1,7 @@
+---
+- name: Restart Docker container
+  docker_container:
+    name: "{{ nginx_exporter_container_name }}"
+    image: "{{ nginx_exporter_docker_image }}"
+    state: started
+    restart: yes

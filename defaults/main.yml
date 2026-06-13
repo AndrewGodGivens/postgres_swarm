@@ -1,0 +1,26 @@
+# Postgres vars
+postgres_swarm_user: postgres
+postgres_swarm_password: password
+postgres_swarm_db_name: my_db
+postgres_swarm_archive_mode: 'off'
+postgres_swarm_archive_timeout: 600
+postgres_swarm_pgdata: '/var/lib/postgresql/data/pgdata'
+postgres_swarm_pghost: '/var/run/postgresql'
+postgres_swarm_recovery_target_time: '2024-01-15 14:30:00'
+
+# WAL-G vars
+postgres_swarm_aws_access_key_id: aws_id
+postgres_swarm_aws_secret_access_key: secret
+postgres_swarm_aws_region: ru-central1
+postgres_swarm_walg_s3_prefix: s3://walg-backup
+postgres_swarm_apprise_target: 'tgram://secret'
+postgres_swarm_aws_endpoint: ''
+postgres_swarm_recovery_walg: 'false'
+
+# Docker swarm vars
+postgres_swarm_stack_name: my_postgres_stack
+postgres_swarm_image: harbor.escapenavigator.com/library/postgis_with_walg:13-3.2-bis
+postgres_swarm_volume_path: '/var/lib/postgresql/data'
+postgres_swarm_target_host: postgres-host
+postgres_swarm_network_name: project-network
+postgres_swarm_shm_size: '512m'
