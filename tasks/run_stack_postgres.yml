@@ -56,6 +56,32 @@
                 - "node.hostname == {{ postgres_swarm_target_host }}"
       networks: "{{ {postgres_swarm_network_name: {'external': true}} }}"
 
+- name: Add postgres exporter service to compose definition
+  when: postgres_swarm_exporter | bool
+  ansible.builtin.set_fact:
+    compose_definition: "{{ compose_definition | combine(exporter_fragment, recursive=true) }}"
+  vars:
+    exporter_fragment:
+      services:
+        postgres-exporter:
+          image: "{{ postgres_swarm_exporter_image }}"
+          networks:
+            - "{{ postgres_swarm_network_name }}"
+          environment:
+            DATA_SOURCE_NAME: "postgresql://{{ postgres_swarm_user }}:{{ postgres_swarm_password }}@postgres:5432/{{ postgres_swarm_db_name }}?sslmode={{ postgres_swarm_exporter_sslmode }}"
+          ports:
+            - "{{ postgres_swarm_exporter_port }}:9187"
+          deploy:
+            replicas: 1
+            restart_policy:
+              condition: any
+              delay: 5s
+              max_attempts: 3
+              window: 120s
+            placement:
+              constraints:
+                - "node.hostname == {{ postgres_swarm_target_host }}"
+
 - name: Deploy PostgreSQL stack
   community.docker.docker_stack:
     state: present

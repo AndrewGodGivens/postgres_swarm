@@ -24,3 +24,9 @@ postgres_swarm_volume_path: '/var/lib/postgresql/data'
 postgres_swarm_target_host: postgres-host
 postgres_swarm_network_name: project-network
 postgres_swarm_shm_size: '512m'
+
+# Postgres exporter vars
+postgres_swarm_exporter: true
+postgres_swarm_exporter_image: prometheuscommunity/postgres-exporter:latest
+postgres_swarm_exporter_port: 9187
+postgres_swarm_exporter_sslmode: disable

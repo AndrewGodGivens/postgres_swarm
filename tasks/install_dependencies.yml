@@ -11,11 +11,11 @@
 #     executable: pip3
 #     state: present
 
-# - name: Ensure jsondiff is installed
-#   ansible.builtin.apt:
-#     name: python3-jsondiff
-#     state: present
-#     update_cache: yes
+- name: Ensure jsondiff is installed
+  ansible.builtin.apt:
+    name: python3-jsondiff
+    state: present
+    update_cache: yes
 
 - name: Ensure postgres swarm volume directory exists
   ansible.builtin.file:
