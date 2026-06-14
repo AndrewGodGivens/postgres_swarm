@@ -10,7 +10,10 @@
             - "{{ postgres_swarm_network_name }}"
           volumes:
             - "{{ postgres_swarm_volume_path }}:{{ postgres_swarm_pgdata }}"
-          shm_size: "{{ postgres_swarm_shm_size }}"
+            - type: tmpfs
+              target: /dev/shm
+              tmpfs:
+                size: "{{ postgres_swarm_shm_size | human_to_bytes }}"
           command:
             - postgres
             - -c
