@@ -10,10 +10,6 @@
             - "{{ postgres_swarm_network_name }}"
           volumes:
             - "{{ postgres_swarm_volume_path }}:{{ postgres_swarm_pgdata }}"
-            - type: tmpfs
-              target: /dev/shm
-              tmpfs:
-                size: "{{ postgres_swarm_shm_size | human_to_bytes }}"
           command:
             - postgres
             - -c
@@ -84,6 +80,20 @@
             placement:
               constraints:
                 - "node.hostname == {{ postgres_swarm_target_host }}"
+
+- name: Append /dev/shm tmpfs mount with integer size
+  ansible.builtin.set_fact:
+    compose_definition: "{{ compose_definition | combine(shm_fragment, recursive=true) }}"
+  vars:
+    shm_tmpfs_mount:
+      type: tmpfs
+      target: /dev/shm
+      tmpfs:
+        size: "{{ postgres_swarm_shm_size | human_to_bytes | int }}"
+    shm_fragment:
+      services:
+        postgres:
+          volumes: "{{ compose_definition.services.postgres.volumes + [shm_tmpfs_mount] }}"
 
 - name: Deploy PostgreSQL stack
   community.docker.docker_stack:
