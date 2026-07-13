@@ -82,6 +82,39 @@ network using DSN
 `postgresql://<user>:<password>@postgres:5432/<db>?sslmode=<sslmode>`,
 and exposes metrics on the published port for Prometheus to scrape.
 
+### WAL-G backup cron (optional)
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `postgres_swarm_backup_cron_enabled` | `true` | Install the cron jobs below on the target host. |
+| `postgres_swarm_backup_cron_minute` | `'0'` | Minute field of the `backup-push` cron schedule. |
+| `postgres_swarm_backup_cron_hour` | `'3'` | Hour field of the `backup-push` cron schedule. |
+| `postgres_swarm_backup_cron_day` | `'*'` | Day-of-month field of the `backup-push` cron schedule. |
+| `postgres_swarm_backup_cron_month` | `'*'` | Month field of the `backup-push` cron schedule. |
+| `postgres_swarm_backup_cron_weekday` | `'*'` | Weekday field of the `backup-push` cron schedule. |
+| `postgres_swarm_delete_cron_minute` | `'0'` | Minute field of the `delete before` cron schedule. |
+| `postgres_swarm_delete_cron_hour` | `'1'` | Hour field of the `delete before` cron schedule. |
+| `postgres_swarm_delete_cron_day` | `'*'` | Day-of-month field of the `delete before` cron schedule. |
+| `postgres_swarm_delete_cron_month` | `'*'` | Month field of the `delete before` cron schedule. |
+| `postgres_swarm_delete_cron_weekday` | `'*'` | Weekday field of the `delete before` cron schedule. |
+| `postgres_swarm_backup_retention_days` | `7` | Backups older than this are pruned by `wal-g delete before FIND_FULL`. |
+| `postgres_swarm_log_dir` | `/var/log/postgresql` | Directory for the cron jobs' log files. |
+
+Each schedule field maps 1:1 to the corresponding `ansible.builtin.cron`
+parameter (`minute`/`hour`/`day`/`month`/`weekday`), so any standard cron
+expression is supported (e.g. `postgres_swarm_backup_cron_weekday: '0,3'` to
+run twice a week, or `postgres_swarm_backup_cron_minute: '*/30'` for
+half-hourly runs).
+
+Since Swarm assigns each container a name with a random per-task suffix
+(e.g. `my_postgres_stack_postgres.1.<id>`), the container to back up cannot
+be hardcoded. Both cron jobs resolve it inline at run time via
+`docker ps -q --filter label=com.docker.swarm.service.name=<stack>_postgres`
+(an exact label match, so it can't collide with the `postgres-exporter`
+service) and then run `wal-g.sh backup-push` / `wal-g.sh delete before
+FIND_FULL ... --confirm` inside it, redirecting output to
+`postgres_swarm_log_dir`.
+
 ## Example Playbook
 
 ```yaml

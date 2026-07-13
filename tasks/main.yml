@@ -4,3 +4,7 @@
 
 - name: Run postgres in swarm
   include_tasks: run_stack_postgres.yml
+
+- name: Configure WAL-G backup cron jobs
+  include_tasks: setup_backup_cron.yml
+  when: postgres_swarm_backup_cron_enabled | bool

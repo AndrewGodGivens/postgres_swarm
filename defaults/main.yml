@@ -30,3 +30,18 @@ postgres_swarm_exporter: true
 postgres_swarm_exporter_image: prometheuscommunity/postgres-exporter:latest
 postgres_swarm_exporter_port: 9187
 postgres_swarm_exporter_sslmode: disable
+
+# WAL-G backup cron vars
+postgres_swarm_backup_cron_enabled: true
+postgres_swarm_backup_cron_minute: '0'
+postgres_swarm_backup_cron_hour: '3'
+postgres_swarm_backup_cron_day: '*'
+postgres_swarm_backup_cron_month: '*'
+postgres_swarm_backup_cron_weekday: '*'
+postgres_swarm_delete_cron_minute: '0'
+postgres_swarm_delete_cron_hour: '1'
+postgres_swarm_delete_cron_day: '*'
+postgres_swarm_delete_cron_month: '*'
+postgres_swarm_delete_cron_weekday: '*'
+postgres_swarm_backup_retention_days: 7
+postgres_swarm_log_dir: /var/log/postgresql
