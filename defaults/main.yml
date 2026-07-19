@@ -45,3 +45,10 @@ postgres_swarm_delete_cron_month: '*'
 postgres_swarm_delete_cron_weekday: '*'
 postgres_swarm_backup_retention_days: 7
 postgres_swarm_log_dir: /var/log/postgresql
+
+# Fluentd/Loki log shipping (optional)
+# Requires a fluentd forward input reachable from this node, e.g. the
+# ansible_fluentd role with fluentd_in_docker: true.
+postgres_swarm_loki_logging_enabled: false
+postgres_swarm_loki_fluentd_address: "127.0.0.1:24224"
+postgres_swarm_loki_tag: "swarm.{{ '{{' }}.Name{{ '}}' }}"

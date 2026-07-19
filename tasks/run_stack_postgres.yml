@@ -81,6 +81,34 @@
               constraints:
                 - "node.hostname == {{ postgres_swarm_target_host }}"
 
+- name: Add fluentd logging driver to postgres service
+  when: postgres_swarm_loki_logging_enabled | bool
+  ansible.builtin.set_fact:
+    compose_definition: "{{ compose_definition | combine(logging_fragment, recursive=true) }}"
+  vars:
+    logging_fragment:
+      services:
+        postgres:
+          logging:
+            driver: fluentd
+            options:
+              fluentd-address: "{{ postgres_swarm_loki_fluentd_address }}"
+              tag: "{{ postgres_swarm_loki_tag }}"
+
+- name: Add fluentd logging driver to postgres-exporter service
+  when: (postgres_swarm_loki_logging_enabled | bool) and (postgres_swarm_exporter | bool)
+  ansible.builtin.set_fact:
+    compose_definition: "{{ compose_definition | combine(logging_fragment, recursive=true) }}"
+  vars:
+    logging_fragment:
+      services:
+        postgres-exporter:
+          logging:
+            driver: fluentd
+            options:
+              fluentd-address: "{{ postgres_swarm_loki_fluentd_address }}"
+              tag: "{{ postgres_swarm_loki_tag }}"
+
 - name: Append /dev/shm tmpfs mount with integer size
   ansible.builtin.set_fact:
     compose_definition: "{{ compose_definition | combine(shm_fragment, recursive=true) }}"

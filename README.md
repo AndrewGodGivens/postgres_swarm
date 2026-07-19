@@ -100,6 +100,30 @@ and exposes metrics on the published port for Prometheus to scrape.
 | `postgres_swarm_backup_retention_days` | `7` | Backups older than this are pruned by `wal-g delete before FIND_FULL`. |
 | `postgres_swarm_log_dir` | `/var/log/postgresql` | Directory for the cron jobs' log files. |
 
+### Fluentd/Loki log shipping (optional)
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `postgres_swarm_loki_logging_enabled` | `false` | Attach a `fluentd` logging driver to the `postgres` service (and `postgres-exporter` when enabled). |
+| `postgres_swarm_loki_fluentd_address` | `127.0.0.1:24224` | `fluentd-address` log-opt — must be reachable from this Swarm node (e.g. a local fluentd container). |
+| `postgres_swarm_loki_tag` | `swarm.{{.Name}}` | `tag` log-opt (Docker Go-template syntax). |
+
+When enabled, the compose definition gets:
+
+```yaml
+services:
+  postgres:
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "127.0.0.1:24224"
+        tag: "swarm.{{.Name}}"
+```
+
+Requires a fluentd forward input already listening on
+`postgres_swarm_loki_fluentd_address` on this node — see the
+`ansible_fluentd` role's `fluentd_in_docker: true` mode.
+
 Each schedule field maps 1:1 to the corresponding `ansible.builtin.cron`
 parameter (`minute`/`hour`/`day`/`month`/`weekday`), so any standard cron
 expression is supported (e.g. `postgres_swarm_backup_cron_weekday: '0,3'` to
