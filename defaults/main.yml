@@ -23,7 +23,7 @@ postgres_swarm_image: harbor.escapenavigator.com/library/postgis_with_walg:13-3.
 postgres_swarm_volume_path: '/var/lib/postgresql/data'
 postgres_swarm_target_host: postgres-host
 postgres_swarm_network_name: project-network
-postgres_swarm_shm_size: 536870912
+postgres_swarm_shm_size: '512m'
 
 # Postgres exporter vars
 postgres_swarm_exporter: true

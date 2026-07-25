@@ -1,4 +1,8 @@
 ---
+- name: Compute /dev/shm tmpfs size in bytes
+  ansible.builtin.set_fact:
+    postgres_swarm_shm_size_bytes: "{{ postgres_swarm_shm_size | human_to_bytes | int }}"
+
 - name: Build compose definition
   ansible.builtin.set_fact:
     compose_definition:
@@ -13,7 +17,7 @@
             - type: tmpfs
               target: /dev/shm
               tmpfs:
-                size: "{{ postgres_swarm_shm_size }}"
+                size: "{{ postgres_swarm_shm_size_bytes }}"
           command:
             - postgres
             - -c
