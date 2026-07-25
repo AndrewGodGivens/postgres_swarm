@@ -66,9 +66,22 @@ WAL-G compression is hardcoded in the compose (`WALG_COMPRESSION_METHOD: brotli`
 | `postgres_swarm_volume_path` | `/var/lib/postgresql/data` | Host path bind-mounted into the container. |
 | `postgres_swarm_target_host` | `postgres-host` | Swarm node hostname the services are pinned to (`node.hostname` constraint). |
 | `postgres_swarm_network_name` | `project-network` | Name of the pre-existing external overlay network. |
-| `postgres_swarm_shm_size` | `512m` | Size of the `/dev/shm` tmpfs mount for the postgres container. Accepts human-readable values (e.g. `512m`, `1g`); converted to bytes in a dedicated `postgres_swarm_shm_size_bytes` fact via `human_to_bytes` **before** the compose definition is built, then referenced as a plain variable inside it. Implemented as a tmpfs mount because Swarm ignores the compose `shm_size` key. |
+| `postgres_swarm_shm_size` | `536870912` | Size of the `/dev/shm` tmpfs mount for the postgres container, **as a raw byte-count integer** (e.g. `536870912` for 512 MB, `1073741824` for 1 GB). Do not use human-readable strings like `'512m'` or a `human_to_bytes`-based conversion — see below. Implemented as a tmpfs mount because Swarm ignores the compose `shm_size` key. |
 
-**Known-fragile on some controllers:** on at least one `mitogen`-strategy controller, computing this conversion with a Jinja filter *inline* inside the compose dict (`size: "{{ postgres_swarm_shm_size | human_to_bytes | int }}"`) caused `docker stack deploy` to fail with `tmpfs.size must be a integer` — the filter's integer result was apparently re-serialized as a string before reaching Docker. Precomputing it into `postgres_swarm_shm_size_bytes` and referencing that as a bare variable is believed to avoid this, but has not been proven safe on every controller/mitogen combination. If you hit `tmpfs.size must be a integer` again, set `postgres_swarm_shm_size` directly to a raw byte integer (e.g. `1073741824`) — with an already-integer input, `human_to_bytes` is a no-op and the risk of filter-related re-serialization is eliminated entirely.
+**Why not a human-readable value (`'512m'`) with automatic conversion:**
+Docker's `tmpfs.size` in Swarm compose requires a plain integer. Converting
+`postgres_swarm_shm_size` with `{{ ... | human_to_bytes | int }}` — whether
+inline in the compose dict or precomputed into a separate fact beforehand —
+was tested and confirmed broken on a real controller: the fact ended up
+holding the value as a **string** (`'1073741824'`, quotes included) rather
+than an integer. This happens because that controller's `ansible-core`
+version does not restore the native type of a Jinja expression that goes
+through a filter chain — only a bare `{{ variable }}` reference (no
+filters at all) preserves the variable's original type as-is. Since
+Docker requires a true integer and `docker_stack`'s `compose` parameter is
+passed through untouched (no type coercion), any filter-based conversion
+is unreliable here. Set `postgres_swarm_shm_size` directly to the byte
+count you want; no conversion happens in the role.
 
 ### Prometheus postgres-exporter (optional)
 
