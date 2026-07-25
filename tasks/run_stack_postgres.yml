@@ -123,10 +123,16 @@
         postgres:
           volumes: "{{ compose_definition.services.postgres.volumes + [shm_tmpfs_mount] }}"
 
+- name: Render compose definition to a file
+  ansible.builtin.copy:
+    dest: "/tmp/{{ postgres_swarm_stack_name }}-compose.yml"
+    content: "{{ compose_definition | to_nice_yaml(indent=2) }}"
+    mode: '0600'
+
 - name: Deploy PostgreSQL stack
   community.docker.docker_stack:
     state: present
     name: "{{ postgres_swarm_stack_name }}"
     compose:
-      - "{{ compose_definition }}"
+      - "/tmp/{{ postgres_swarm_stack_name }}-compose.yml"
   register: deploy_result
