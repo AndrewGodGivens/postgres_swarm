@@ -66,7 +66,7 @@ WAL-G compression is hardcoded in the compose (`WALG_COMPRESSION_METHOD: brotli`
 | `postgres_swarm_volume_path` | `/var/lib/postgresql/data` | Host path bind-mounted into the container. |
 | `postgres_swarm_target_host` | `postgres-host` | Swarm node hostname the services are pinned to (`node.hostname` constraint). |
 | `postgres_swarm_network_name` | `project-network` | Name of the pre-existing external overlay network. |
-| `postgres_swarm_shm_size` | `512m` | Size of the `/dev/shm` tmpfs mount for the postgres container. Accepts human-readable values (e.g. `512m`, `1g`) and is converted to bytes via `human_to_bytes`. Implemented as a tmpfs mount because Swarm ignores the compose `shm_size` key. |
+| `postgres_swarm_shm_size` | `536870912` | Size of the `/dev/shm` tmpfs mount for the postgres container, **in bytes as a plain integer** (e.g. `536870912` for 512 MB). Do not use human-readable strings like `'512m'` — Docker's `tmpfs.size` in Swarm compose requires a raw byte count, and on this controller a computed conversion (`human_to_bytes`) was observed being serialized back to a string, causing `tmpfs.size must be a integer`. Implemented as a tmpfs mount because Swarm ignores the compose `shm_size` key. |
 
 ### Prometheus postgres-exporter (optional)
 
