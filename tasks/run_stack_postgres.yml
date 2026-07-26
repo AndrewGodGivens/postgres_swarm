@@ -95,23 +95,11 @@
         postgres:
           logging:
             driver: fluentd
-            options:
-              fluentd-address: "{{ postgres_swarm_loki_fluentd_address }}"
-              tag: "{{ postgres_swarm_loki_tag }}"
-
-- name: Add fluentd logging driver to postgres-exporter service
-  when: (postgres_swarm_loki_logging_enabled | bool) and (postgres_swarm_exporter | bool)
-  ansible.builtin.set_fact:
-    compose_definition: "{{ compose_definition | combine(logging_fragment, recursive=true) }}"
-  vars:
-    logging_fragment:
-      services:
-        postgres-exporter:
-          logging:
-            driver: fluentd
-            options:
-              fluentd-address: "{{ postgres_swarm_loki_fluentd_address }}"
-              tag: "{{ postgres_swarm_loki_tag }}"
+            options: >-
+              {{
+                {'fluentd-address': postgres_swarm_loki_fluentd_address, 'tag': postgres_swarm_loki_tag}
+                | combine(postgres_swarm_loki_log_opts_extra)
+              }}
 
 - name: Deploy PostgreSQL stack
   community.docker.docker_stack:

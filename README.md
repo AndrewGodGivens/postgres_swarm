@@ -119,9 +119,10 @@ and exposes metrics on the published port for Prometheus to scrape.
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `postgres_swarm_loki_logging_enabled` | `false` | Attach a `fluentd` logging driver to the `postgres` service (and `postgres-exporter` when enabled). |
+| `postgres_swarm_loki_logging_enabled` | `false` | Attach a `fluentd` logging driver to the `postgres` service only (`postgres-exporter` logs are not shipped). |
 | `postgres_swarm_loki_fluentd_address` | `127.0.0.1:24224` | `fluentd-address` log-opt — must be reachable from this Swarm node (e.g. a local fluentd container). |
 | `postgres_swarm_loki_tag` | `swarm.{{.Name}}` | `tag` log-opt (Docker Go-template syntax). |
+| `postgres_swarm_loki_log_opts_extra` | `{}` | Extra Docker fluentd log-opts, merged on top of `fluentd-address`/`tag`. Use Docker's `labels`/`env`/`env-regex` options here to attach container labels or env vars as extra fields on every log record. |
 
 When enabled, the compose definition gets:
 
@@ -134,6 +135,37 @@ services:
         fluentd-address: "127.0.0.1:24224"
         tag: "swarm.{{.Name}}"
 ```
+
+**Adding extra labels to logs shipped to Loki:**
+
+```yaml
+postgres_swarm_loki_log_opts_extra:
+  labels: "com.docker.stack.namespace"   # comma-separated container labels
+  env: "POSTGRES_DB"                     # comma-separated env var names
+```
+
+Docker attaches the named labels/env vars as extra fields (under `attrs`) on
+the JSON payload it sends to fluentd — this alone does **not** turn them into
+actual Loki labels. On the fluentd side, add `label_keys` to the `@type
+loki` match block (in `fluentd_config`, in the `ansible_fluentd` role) to
+promote those record fields into real Loki labels, e.g.:
+
+```yaml
+  - directive: match
+    directive_filter: "**"
+    data:
+      - |
+        @type loki
+        url "https://monitor.example.com:3100"
+        extra_labels {"env":"prod"}
+        label_keys "container_name,attrs.com_docker_stack_namespace,attrs.POSTGRES_DB"
+```
+
+(Docker log-opt labels/env are exposed to fluentd with dots replaced by
+underscores, e.g. `com.docker.stack.namespace` → `attrs.com_docker_stack_namespace` —
+check the actual field names in a sample event, e.g. via `docker compose
+logs fluentd` with the fluentd `stdout` debug output, before wiring up
+`label_keys`.)
 
 Requires a fluentd forward input already listening on
 `postgres_swarm_loki_fluentd_address` on this node — see the

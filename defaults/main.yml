@@ -51,4 +51,8 @@ postgres_swarm_log_dir: /var/log/postgresql
 # ansible_fluentd role with fluentd_in_docker: true.
 postgres_swarm_loki_logging_enabled: false
 postgres_swarm_loki_fluentd_address: "127.0.0.1:24224"
-postgres_swarm_loki_tag: "swarm.{{ '{{' }}.Name{{ '}}' }}"
+postgres_swarm_loki_tag: !unsafe "swarm.{{.Name}}"
+# Extra Docker fluentd log-opts, e.g. to attach container labels/env vars
+# as extra fields on each log record (docker log-driver options `labels`,
+# `env`, `env-regex`). Merged on top of fluentd-address/tag above.
+postgres_swarm_loki_log_opts_extra: {}
